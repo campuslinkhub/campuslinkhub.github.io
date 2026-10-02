@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CampusLink – Campus Dating</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--bg:#F1EDFF;--card:#fff;--ink:#1B1740;--mute:#6B6890;--line:#DEDAF0;--brand:#5B3FD9;--gold:#F2B632;--like:#E0446A;--on:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:linear-gradient(160deg,#E9E4FF 0%,#FBE7F3 55%,#FFF1DD 100%) fixed;color:var(--ink);font:16px/1.45 'DM Sans',system-ui,sans-serif}
+h1,h2,h3{font-family:'Bricolage Grotesque','DM Sans',system-ui,sans-serif;line-height:1.1}
+#app{max-width:460px;margin:0 auto;height:100%;display:flex;flex-direction:column}
+header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(120deg,#4B35C9,#9B52E8);box-shadow:0 4px 18px rgba(75,53,201,.28)}
+header h1{font-size:23px;font-weight:800;color:#fff}
+header span{font-size:13px;color:rgba(255,255,255,.88);font-weight:500}
+main{flex:1;overflow-y:auto;padding:20px}
+.hidden{display:none!important}
+label{display:block;font-weight:500;margin:14px 0 6px}
+input,select{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--gold);outline-offset:1px}
+.btn{padding:14px 18px;border:0;border-radius:14px;font:700 16px 'DM Sans',sans-serif;cursor:pointer;background:linear-gradient(120deg,#5B3FD9,#9B52E8);color:#fff;box-shadow:0 6px 16px rgba(91,63,217,.3);width:100%;margin-top:20px}
+.err{color:var(--like);font-size:14px;margin-top:8px;min-height:20px}
+.hero h2{font-size:34px;font-weight:800;margin-bottom:8px}
+.hero p{color:var(--mute)}
+.card{background:var(--card);border-radius:26px;overflow:hidden;box-shadow:0 14px 36px rgba(75,53,201,.16)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}.tags span{background:#EFEAFF;color:#4B35C9;padding:5px 11px;border-radius:20px;font-size:13px;font-weight:700}.tags span:nth-child(2){background:#FFE9F0;color:#B8244F}.tags span:nth-child(3){background:#FFF1D2;color:#8A5A00}
+.pic{height:230px;display:flex;align-items:center;justify-content:center;font:800 88px 'Bricolage Grotesque',sans-serif;color:rgba(255,255,255,.92)}
+.body{padding:18px}
+.body h2{font-size:26px;font-weight:800}
+.meta{color:var(--mute);margin:4px 0 12px}
+.prompt{background:#F6F3FF;border-radius:12px;padding:12px 14px}
+.prompt small{color:var(--mute);display:block;margin-bottom:2px}
+.acts{display:flex;gap:14px;margin-top:18px}
+.acts button{flex:1;margin:0;padding:15px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:700 16px 'DM Sans',sans-serif;cursor:pointer}
+.acts .like{background:linear-gradient(120deg,#E0446A,#FF7A59);border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(224,68,106,.35)}
+nav{display:flex;background:#fff;box-shadow:0 -4px 18px rgba(75,53,201,.1)}
+nav button{flex:1;padding:14px;border:0;background:none;color:var(--mute);font:700 15px 'DM Sans',sans-serif;cursor:pointer}
+nav button.on{color:var(--brand);box-shadow:inset 0 3px 0 var(--gold)}
+.row{display:flex;align-items:center;gap:14px;padding:12px;border-radius:14px;cursor:pointer;width:100%;border:0;background:none;color:var(--ink);text-align:left;font:inherit}
+.row{background:#fff;margin-bottom:10px;box-shadow:0 4px 14px rgba(75,53,201,.1)}
+.av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font:800 20px 'Bricolage Grotesque',sans-serif;flex:none}
+.empty{text-align:center;color:var(--mute);padding:50px 10px}
+.msgs{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.m{max-width:80%;padding:10px 14px;border-radius:18px;background:#fff;box-shadow:0 2px 8px rgba(75,53,201,.1)}
+.m.me{align-self:flex-end;background:linear-gradient(120deg,#5B3FD9,#9B52E8);color:#fff}
+.send{display:flex;gap:8px}.send button{width:auto;margin:0}
+.pfp{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,#6D4AFF,#B58CFF) center/cover;display:flex;align-items:center;justify-content:center;color:#fff;font:800 52px 'Bricolage Grotesque',sans-serif;margin:0 auto 14px;box-shadow:0 8px 22px rgba(75,53,201,.3)}
+.btn.ghost{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(75,53,201,.15);width:auto;margin-top:0;padding:10px 16px;font-size:14px}
+.step{display:flex;gap:14px;align-items:center;background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(75,53,201,.1)}
+.num{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5B3FD9,#9B52E8);color:#fff;font:800 17px 'Bricolage Grotesque',sans-serif;display:flex;align-items:center;justify-content:center;flex:none}
+.link{background:none;border:0;color:var(--mute);font:500 14px 'DM Sans',sans-serif;text-decoration:underline;cursor:pointer;padding:6px}
+.rb{display:flex;justify-content:center;gap:18px;margin-top:10px}
+.ov{position:fixed;inset:0;background:rgba(27,23,64,.55);display:flex;align-items:center;justify-content:center;z-index:9}
+.sheet{background:#fff;border-radius:20px;padding:20px;width:min(92%,380px);display:flex;flex-direction:column;gap:8px;text-align:center}
+.sheet .opt{padding:13px;border:0;border-radius:12px;background:#F1EDFF;color:#3A2E8F;font:700 15px 'DM Sans',sans-serif;cursor:pointer}
+.back{background:none;border:0;color:var(--brand);font:700 15px 'DM Sans',sans-serif;cursor:pointer;padding:0 0 10px}
+#toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--gold);color:#1B1740;padding:12px 20px;border-radius:30px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div id="app">
+  <header><h1>CampusLink</h1><span id="who"></span></header>
+  <main id="main"></main>
+  <nav id="nav" class="hidden">
+    <button id="t-d" class="on">Discover</button>
+    <button id="t-m">Matches <span id="cnt"></span></button>
+    <button id="t-p">Profile</button>
+  </nav>
+</div>
+<div id="toast" class="hidden"></div>
+<script>
+const db=supabase.createClient('https://ajnzvndmtdutwubdtszr.supabase.co','sb_publishable_i30XMJ_mKnT1ZHR1J8JYEg_gHSVyad7');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const G=(a,b)=>`linear-gradient(135deg,${a},${b})`;
+const COLORS=[G('#6D4AFF','#B58CFF'),G('#FF7A59','#FFB36B'),G('#14B8A6','#6EE7B7'),G('#E0446A','#FF9EBB'),G('#2F7DF6','#7CC4FF'),G('#9B52E8','#F08CD8'),G('#F59E0B','#FDE08A'),G('#10B981','#A7F3D0')];
+const YRS=['Freshman','2nd year','3rd year','4th year','GC'],CPS=['Arid Campus','Business Campus','MIT Campus','Ayder Campus','Veterinary Campus'];
+const opts=(a,v)=>a.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('');
+let me=null,uid=null,filt='All campuses',chan=null,openM=null,passed=[];
+try{passed=JSON.parse(localStorage.getItem('cl_passed')||'[]')}catch(e){}
+const savePassed=()=>{try{localStorage.setItem('cl_passed',JSON.stringify(passed))}catch(e){}};
+function toast(t){const e=$('toast');e.textContent=t;e.classList.remove('hidden');setTimeout(()=>e.classList.add('hidden'),2400)}
+function ask(title,choices,cb){
+  const o=document.createElement('div');o.className='ov';
+  o.innerHTML=`<div class="sheet"><h3>${esc(title)}</h3>${choices.map((c,k)=>`<button class="opt" data-k="${k}">${esc(c)}</button>`).join('')}<button class="link" id="cx" style="margin-top:6px">Cancel</button></div>`;
+  document.body.appendChild(o);
+  o.onclick=e=>{const b=e.target.closest('.opt');if(b){o.remove();cb(choices[b.dataset.k])}else if(e.target.id==='cx'||e.target===o)o.remove()};
+}
+const picUrl=p=>p&&p.photo_path?db.storage.from('avatars').getPublicUrl(p.photo_path).data.publicUrl:null;
+const faceStyle=p=>{const u=picUrl(p);return u?`background:url('${u}') center/cover`:`background:${COLORS[(p.name||'A').charCodeAt(0)%8]}`};
+const faceText=p=>picUrl(p)?'':esc((p.name||'?')[0].toUpperCase());
+function readPhoto(f,ok,bad){
+  if(!f)return;
+  if(!f.type.startsWith('image/'))return bad('Choose an image file.');
+  if(f.size>=2*1024*1024)return bad('Photo must be under 2 MB. Choose a smaller one.');
+  const u=URL.createObjectURL(f),im=new Image();
+  im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=400;const m=Math.min(im.width,im.height);
+    c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,400,400);
+    c.toBlob(b=>ok(b,c.toDataURL('image/jpeg',.85)),'image/jpeg',.85);URL.revokeObjectURL(u)};
+  im.onerror=()=>bad('Could not read that image.');im.src=u}
+async function upPhoto(blob){const path=uid+'/'+Date.now()+'.jpg';const {error}=await db.storage.from('avatars').upload(path,blob,{contentType:'image/jpeg'});if(error)throw error;return path}
+
+function home(){
+  $('nav').classList.add('hidden');
+  $('main').innerHTML=`<div class="hero" style="margin-top:8px"><h2 style="font-size:38px">Meet someone from your campus.</h2>
+  <p>CampusLink brings together students from all five campuses. Browse profiles, like the people you click with, and start chatting when it is mutual.</p></div>
+  <button class="btn" id="st">Create your account</button>
+  <button class="btn ghost" id="li" style="display:block;margin:12px auto 0">I already have an account</button>
+  <h3 style="margin:30px 0 12px;font-size:21px">How it works</h3>
+  <div class="step"><span class="num">1</span><div><b>Create your profile</b><br><span class="meta">Add a photo, your year, campus and major.</span></div></div>
+  <div class="step"><span class="num">2</span><div><b>Browse and like</b><br><span class="meta">See students and tap Like on the ones you would like to meet.</span></div></div>
+  <div class="step"><span class="num">3</span><div><b>Chat on a match</b><br><span class="meta">When you both like each other, you can send messages.</span></div></div>
+  <h3 style="margin:26px 0 10px;font-size:21px">Students from every campus</h3>
+  <div class="tags"><span>Arid</span><span>Business</span><span>MIT</span><span>Ayder</span><span>Veterinary</span></div>
+  <p class="meta" style="margin:18px 0 24px">Using a real photo of yourself is a good idea, so people know who they are talking to. You can also report or block anyone at any time.</p>`;
+  $('st').onclick=()=>signup(false);$('li').onclick=login;
+}
+function login(){
+  $('main').innerHTML=`<button class="back" id="hb">Back</button><div class="hero"><h2>Welcome back</h2></div>
+  <label for="em">Email</label><input id="em" type="email" autocomplete="email">
+  <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
+  <p class="err" id="err"></p><button class="btn" id="go">Log in</button>`;
+  $('hb').onclick=home;
+  $('go').onclick=async()=>{const {error}=await db.auth.signInWithPassword({email:$('em').value.trim(),password:$('pw').value});
+    if(error)return $('err').textContent=error.message;enter()};
+}
+function signup(setup){
+  let blob=null;
+  $('nav').classList.add('hidden');
+  $('main').innerHTML=`${setup?'':'<button class="back" id="hb">Back</button>'}<div class="hero"><h2>${setup?'Finish your profile':'Create your account'}</h2><p>It takes about a minute.</p></div>
+  <div class="pfp" id="spf" style="margin-top:18px">+</div>
+  <div style="display:flex;justify-content:center"><button class="btn ghost" id="sph">Add a photo</button></div>
+  <input type="file" id="sfi" accept="image/*" class="hidden">
+  <p class="meta" style="text-align:center;margin-top:8px">A real photo of you helps people know who they are talking to. Under 2 MB. You can add or change it anytime in Profile.</p>
+  ${setup?'':`<label for="em">Email</label><input id="em" type="email" autocomplete="email">
+  <label for="pw">Password (8 or more characters)</label><input id="pw" type="password" autocomplete="new-password">`}
+  <label for="nm">First name</label><input id="nm" autocomplete="given-name" maxlength="40">
+  <label for="yr">Year</label><select id="yr">${opts(YRS)}</select>
+  <label for="cp">Campus</label><select id="cp">${opts(CPS)}</select>
+  <label for="mj">Major</label><input id="mj" maxlength="60">
+  <label style="display:flex;gap:10px;align-items:center;font-weight:400"><input type="checkbox" id="ag" style="width:auto"> I am 18 or older</label>
+  <p class="err" id="err"></p><button class="btn" id="go">Create account</button>`;
+  if(!setup)$('hb').onclick=home;
+  $('sph').onclick=()=>$('sfi').click();
+  $('sfi').onchange=e=>{$('err').textContent='';readPhoto(e.target.files[0],(b,d)=>{blob=b;$('spf').style.backgroundImage=`url(${d})`;$('spf').textContent=''},t=>$('err').textContent=t);e.target.value=''};
+  $('go').onclick=async()=>{
+    const v=id=>$(id).value.trim(),n=v('nm'),m=v('mj'),b=$('go');
+    if(!setup){if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('em')))return $('err').textContent='Enter a valid email address.';if($('pw').value.length<8)return $('err').textContent='Use a password with at least 8 characters.'}
+    if(!n||!m)return $('err').textContent='Add your name and major.';
+    if(!$('ag').checked)return $('err').textContent='You must be 18 or older to join.';
+    b.disabled=true;$('err').textContent='';
+    try{
+      if(!setup){const {data,error}=await db.auth.signUp({email:v('em'),password:$('pw').value});if(error)throw error;
+        if(!data.session){b.disabled=false;return $('err').textContent='Check your email to confirm your account, then log in.'}uid=data.user.id}
+      const row={id:uid,name:n,year:$('yr').value,campus:$('cp').value,major:m,adult_confirmed:true};
+      if(blob)row.photo_path=await upPhoto(blob);
+      const {error:e2}=await db.from('profiles').insert(row);if(e2)throw e2;
+      enter();
+    }catch(e){$('err').textContent=e.message||'Something went wrong.';b.disabled=false}
+  };
+}
+async function enter(){
+  const {data:{session}}=await db.auth.getSession();
+  if(!session)return home();
+  uid=session.user.id;
+  const {data}=await db.from('profiles').select('*').eq('id',uid).maybeSingle();
+  if(!data)return signup(true);
+  me=data;$('who').textContent=me.name+' · '+me.campus;$('nav').classList.remove('hidden');tab('d');
+}
+function tab(t){
+  if(chan){db.removeChannel(chan);chan=null}openM=null;
+  ['d','m','p'].forEach(k=>$('t-'+k).className=t===k?'on':'');
+  t==='d'?discover():t==='m'?list():profile();
+}
+async function doBlock(p){await db.from('blocks').insert({blocker_id:uid,blocked_id:p.id})}
+function report(p,after){ask('Report '+p.name,['Fake profile','Inappropriate content','Harassment','Something else'],async c=>{
+  await db.from('reports').insert({reporter_id:uid,reported_id:p.id,reason:c});await doBlock(p);toast('Reported. '+p.name+' is also blocked.');after()})}
+function blockIt(p,after){ask('Block '+p.name+'?',['Yes, block '+p.name],async()=>{await doBlock(p);toast(p.name+' is blocked');after()})}
+
+async function discover(){
+  $('main').innerHTML='<p class="empty">Loading…</p>';
+  let q=db.from('profiles').select('*').neq('id',uid).limit(60);
+  if(filt!=='All campuses')q=q.eq('campus',filt);
+  const [pr,lk]=await Promise.all([q,db.from('likes').select('to_id')]);
+  const liked=(lk.data||[]).map(x=>x.to_id);
+  const p=(pr.data||[]).find(x=>!liked.includes(x.id)&&!passed.includes(x.id));
+  const bar=`<select id="fl" aria-label="Campus filter" style="margin-bottom:14px">${opts(['All campuses',...CPS],filt)}</select>`;
+  const all=filt==='All campuses';
+  $('main').innerHTML=bar+(p?`<div class="card"><div class="pic" style="${faceStyle(p)}">${faceText(p)}</div>
+  <div class="body"><h2>${esc(p.name)}</h2><div class="tags"><span>${esc(p.year)}</span><span>${esc(p.campus)}</span><span>${esc(p.major)}</span></div>
+  ${p.bio?`<div class="prompt"><small>About me</small>${esc(p.bio)}</div>`:''}
+  <div class="acts"><button id="pass">Pass</button><button class="like" id="lk">Like</button></div></div></div>
+  <div class="rb"><button class="link" id="rp">Report</button><button class="link" id="bl">Block</button></div>`
+  :`<div class="empty"><h2>No one new${all?' yet':' here'}.</h2><p>${all?'Invite friends from your campus to join CampusLink.':'Try another campus or choose All campuses.'}</p></div>`);
+  $('fl').onchange=e=>{filt=e.target.value;discover()};
+  if(!p)return;
+  $('pass').onclick=()=>{passed.push(p.id);savePassed();discover()};
+  $('lk').onclick=async()=>{
+    const {error}=await db.from('likes').insert({from_id:uid,to_id:p.id});
+    if(error)return toast('Could not like. Try again.');
+    const a=uid<p.id?uid:p.id,b=uid<p.id?p.id:uid;
+    const {data}=await db.from('matches').select('id').eq('user_a',a).eq('user_b',b).maybeSingle();
+    toast(data?'It’s a match with '+p.name+'!':'Liked. Maybe they will like you back.');discover()};
+  $('rp').onclick=()=>report(p,discover);$('bl').onclick=()=>blockIt(p,discover);
+}
+async function list(){
+  $('main').innerHTML='<p class="empty">Loading…</p>';
+  const {data:ms}=await db.from('matches').select('id,user_a,user_b').order('created_at',{ascending:false});
+  const ids=(ms||[]).map(m=>m.user_a===uid?m.user_b:m.user_a);
+  const {data:ps}=ids.length?await db.from('profiles').select('*').in('id',ids):{data:[]};
+  const rows=(ms||[]).map(m=>({m,p:(ps||[]).find(x=>x.id===(m.user_a===uid?m.user_b:m.user_a))})).filter(r=>r.p);
+  if(!rows.length){$('main').innerHTML='<div class="empty"><h2>No matches yet.</h2><p>Like a few profiles in Discover to get started.</p></div>';return}
+  $('main').innerHTML='<h2 style="margin-bottom:10px">Your matches</h2>'+rows.map((r,k)=>`<button class="row" data-k="${k}"><span class="av" style="${faceStyle(r.p)}">${faceText(r.p)}</span><span><b>${esc(r.p.name)}</b><br><small style="color:var(--mute)">${esc(r.p.major)} · ${esc(r.p.campus)}</small></span></button>`).join('');
+  document.querySelectorAll('.row').forEach(b=>b.onclick=()=>chat(rows[b.dataset.k].m.id,rows[b.dataset.k].p));
+}
+async function chat(mid,p){
+  openM=mid;const ids=new Set();
+  $('main').innerHTML=`<button class="back" id="bk">Back to matches</button><div style="display:flex;justify-content:space-between;align-items:center"><h2>${esc(p.name)}</h2><span class="rb" style="margin:0"><button class="link" id="rp">Report</button><button class="link" id="bl">Block</button></span></div><div class="msgs" id="log"></div>
+  <div class="send"><input id="tx" placeholder="Write a message" aria-label="Message"><button class="btn" id="sd">Send</button></div>`;
+  $('bk').onclick=()=>tab('m');$('rp').onclick=()=>report(p,()=>tab('m'));$('bl').onclick=()=>blockIt(p,()=>tab('m'));
+  const log=$('log');
+  const add=m=>{if(ids.has(m.id))return;ids.add(m.id);const em=$('em');if(em)em.remove();
+    log.insertAdjacentHTML('beforeend',`<div class="m ${m.sender_id===uid?'me':''}">${esc(m.body)}</div>`);log.lastElementChild.scrollIntoView()};
+  const {data}=await db.from('messages').select('*').eq('match_id',mid).order('created_at');
+  if(openM!==mid)return;
+  if(!data||!data.length)log.innerHTML=`<p class="empty" id="em">Say hi to ${esc(p.name)}.</p>`;
+  (data||[]).forEach(add);
+  chan=db.channel('chat'+mid).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'match_id=eq.'+mid},x=>add(x.new)).subscribe();
+  const send=async()=>{const t=$('tx').value.trim();if(!t)return;$('tx').value='';
+    const {data:d,error}=await db.from('messages').insert({match_id:mid,sender_id:uid,body:t}).select().single();
+    if(error)return toast('Could not send. Try again.');add(d)};
+  $('sd').onclick=send;$('tx').onkeydown=e=>{if(e.key==='Enter')send()};
+}
+function profile(){
+  $('main').innerHTML=`<h2 style="margin-bottom:14px">Your profile</h2>
+  <div class="pfp" id="pfp"></div>
+  <div style="display:flex;gap:10px;justify-content:center"><button class="btn ghost" id="ph">${me.photo_path?'Change photo':'Add a photo'}</button><button class="btn ghost" id="rm">Remove</button></div>
+  <input type="file" id="fi" accept="image/*" class="hidden">
+  <label for="pn">First name</label><input id="pn" maxlength="40" value="${esc(me.name)}">
+  <label for="py">Year</label><select id="py">${opts(YRS,me.year)}</select>
+  <label for="pc">Campus</label><select id="pc">${opts(CPS,me.campus)}</select>
+  <label for="pm">Major</label><input id="pm" maxlength="60" value="${esc(me.major)}">
+  <label for="pb">About me</label><input id="pb" maxlength="90" placeholder="One line about you" value="${esc(me.bio)}">
+  <p class="err" id="pe"></p><button class="btn" id="sv">Save changes</button>
+  <button class="btn ghost" id="lo" style="display:block;margin:14px auto 24px">Log out</button>`;
+  const pfp=()=>{const e=$('pfp');e.style.cssText=faceStyle(me);e.textContent=faceText(me)};pfp();
+  $('ph').onclick=()=>$('fi').click();
+  const setPhoto=async path=>{const {error}=await db.from('profiles').update({photo_path:path}).eq('id',uid);if(error)return $('pe').textContent=error.message;me.photo_path=path;pfp();$('ph').textContent=path?'Change photo':'Add a photo'};
+  $('rm').onclick=()=>setPhoto(null);
+  $('fi').onchange=e=>{$('pe').textContent='';readPhoto(e.target.files[0],async b=>{try{await setPhoto(await upPhoto(b))}catch(x){$('pe').textContent=x.message}},t=>$('pe').textContent=t);e.target.value=''};
+  $('sv').onclick=async()=>{const n=$('pn').value.trim(),m=$('pm').value.trim();
+    if(!n||!m)return $('pe').textContent='Name and major cannot be empty.';
+    const row={name:n,major:m,year:$('py').value,campus:$('pc').value,bio:$('pb').value.trim()};
+    const {error}=await db.from('profiles').update(row).eq('id',uid);
+    if(error)return $('pe').textContent=error.message;
+    Object.assign(me,row);$('who').textContent=n+' · '+me.campus;toast('Profile saved')};
+  $('lo').onclick=async()=>{await db.auth.signOut();me=null;uid=null;$('who').textContent='';home()};
+}
+$('t-d').onclick=()=>tab('d');$('t-m').onclick=()=>tab('m');$('t-p').onclick=()=>tab('p');
+enter();
+</script>
+</body>
+  </html>
