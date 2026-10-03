@@ -37,7 +37,7 @@ input:focus,select:focus,button:focus-visible{outline:3px solid var(--gold);outl
 .acts button{flex:1;margin:0;padding:15px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:700 16px 'DM Sans',sans-serif;cursor:pointer}
 .acts .like{background:linear-gradient(120deg,#E0446A,#FF7A59);border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(224,68,106,.35)}
 nav{display:flex;background:#fff;box-shadow:0 -4px 18px rgba(75,53,201,.1)}
-nav button{flex:1;padding:14px;border:0;background:none;color:var(--mute);font:700 15px 'DM Sans',sans-serif;cursor:pointer}
+nav button{flex:1;padding:14px 4px;border:0;background:none;color:var(--mute);font:700 14px 'DM Sans',sans-serif;cursor:pointer}
 nav button.on{color:var(--brand);box-shadow:inset 0 3px 0 var(--gold)}
 .row{display:flex;align-items:center;gap:14px;padding:12px;border-radius:14px;cursor:pointer;width:100%;border:0;background:none;color:var(--ink);text-align:left;font:inherit}
 .row{background:#fff;margin-bottom:10px;box-shadow:0 4px 14px rgba(75,53,201,.1)}
@@ -56,6 +56,7 @@ nav button.on{color:var(--brand);box-shadow:inset 0 3px 0 var(--gold)}
 .ov{position:fixed;inset:0;background:rgba(27,23,64,.55);display:flex;align-items:center;justify-content:center;z-index:9}
 .sheet{background:#fff;border-radius:20px;padding:20px;width:min(92%,380px);display:flex;flex-direction:column;gap:8px;text-align:center}
 .sheet .opt{padding:13px;border:0;border-radius:12px;background:#F1EDFF;color:#3A2E8F;font:700 15px 'DM Sans',sans-serif;cursor:pointer}
+.bd{background:#E0446A;color:#fff;border-radius:10px;font-size:11px;font-weight:700;padding:2px 7px;margin-left:3px;display:inline-block}.bd:empty{display:none}
 .back{background:none;border:0;color:var(--brand);font:700 15px 'DM Sans',sans-serif;cursor:pointer;padding:0 0 10px}
 #toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--gold);color:#1B1740;padding:12px 20px;border-radius:30px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 </style>
@@ -67,7 +68,8 @@ nav button.on{color:var(--brand);box-shadow:inset 0 3px 0 var(--gold)}
   <main id="main"></main>
   <nav id="nav" class="hidden">
     <button id="t-d" class="on">Discover</button>
-    <button id="t-m">Matches <span id="cnt"></span></button>
+    <button id="t-l">Likes <span class="bd" id="bl2"></span></button>
+    <button id="t-m">Matches <span class="bd" id="bm"></span></button>
     <button id="t-p">Profile</button>
   </nav>
 </div>
@@ -79,10 +81,15 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const G=(a,b)=>`linear-gradient(135deg,${a},${b})`;
 const COLORS=[G('#6D4AFF','#B58CFF'),G('#FF7A59','#FFB36B'),G('#14B8A6','#6EE7B7'),G('#E0446A','#FF9EBB'),G('#2F7DF6','#7CC4FF'),G('#9B52E8','#F08CD8'),G('#F59E0B','#FDE08A'),G('#10B981','#A7F3D0')];
 const YRS=['Freshman','2nd year','3rd year','4th year','GC'],CPS=['Arid Campus','Business Campus','MIT Campus','Ayder Campus','Veterinary Campus'];
+const GEN=['Male','Female'],LOOK=['Male','Female','Both'];
 const opts=(a,v)=>a.map(x=>`<option${x===v?' selected':''}>${x}</option>`).join('');
 let me=null,uid=null,filt='All campuses',chan=null,openM=null,passed=[];
 try{passed=JSON.parse(localStorage.getItem('cl_passed')||'[]')}catch(e){}
 const savePassed=()=>{try{localStorage.setItem('cl_passed',JSON.stringify(passed))}catch(e){}};
+const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k+uid))||d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k+uid,JSON.stringify(v))}catch(e){}};
+let UN=new Set(),NEWM=new Set(),known=null,inbox=null,timer=null,busy=false,lastNL;
+const compat=p=>p&&me&&p.gender&&p.looking_for&&(me.looking_for==='Both'||p.gender===me.looking_for)&&(p.looking_for==='Both'||p.looking_for===me.gender);
 function toast(t){const e=$('toast');e.textContent=t;e.classList.remove('hidden');setTimeout(()=>e.classList.add('hidden'),2400)}
 function ask(title,choices,cb){
   const o=document.createElement('div');o.className='ov';
@@ -139,6 +146,8 @@ function signup(setup){
   ${setup?'':`<label for="em">Email</label><input id="em" type="email" autocomplete="email">
   <label for="pw">Password (8 or more characters)</label><input id="pw" type="password" autocomplete="new-password">`}
   <label for="nm">First name</label><input id="nm" autocomplete="given-name" maxlength="40">
+  <label for="gd">I am</label><select id="gd"><option value="">Choose…</option>${opts(GEN)}</select>
+  <label for="lf">Looking for</label><select id="lf"><option value="">Choose…</option>${opts(LOOK)}</select>
   <label for="yr">Year</label><select id="yr">${opts(YRS)}</select>
   <label for="cp">Campus</label><select id="cp">${opts(CPS)}</select>
   <label for="mj">Major</label><input id="mj" maxlength="60">
@@ -151,12 +160,13 @@ function signup(setup){
     const v=id=>$(id).value.trim(),n=v('nm'),m=v('mj'),b=$('go');
     if(!setup){if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('em')))return $('err').textContent='Enter a valid email address.';if($('pw').value.length<8)return $('err').textContent='Use a password with at least 8 characters.'}
     if(!n||!m)return $('err').textContent='Add your name and major.';
+    if(!$('gd').value||!$('lf').value)return $('err').textContent='Choose your gender and who you are looking for.';
     if(!$('ag').checked)return $('err').textContent='You must be 18 or older to join.';
     b.disabled=true;$('err').textContent='';
     try{
       if(!setup){const {data,error}=await db.auth.signUp({email:v('em'),password:$('pw').value});if(error)throw error;
         if(!data.session){b.disabled=false;return $('err').textContent='Check your email to confirm your account, then log in.'}uid=data.user.id}
-      const row={id:uid,name:n,year:$('yr').value,campus:$('cp').value,major:m,adult_confirmed:true};
+      const row={id:uid,name:n,year:$('yr').value,campus:$('cp').value,major:m,gender:$('gd').value,looking_for:$('lf').value,adult_confirmed:true};
       if(blob)row.photo_path=await upPhoto(blob);
       const {error:e2}=await db.from('profiles').insert(row);if(e2)throw e2;
       enter();
@@ -169,12 +179,76 @@ async function enter(){
   uid=session.user.id;
   const {data}=await db.from('profiles').select('*').eq('id',uid).maybeSingle();
   if(!data)return signup(true);
-  me=data;$('who').textContent=me.name+' · '+me.campus;$('nav').classList.remove('hidden');tab('d');
+  me=data;
+  if(!me.gender||!me.looking_for)return genderSetup();
+  $('who').textContent=me.name+' · '+me.campus;$('nav').classList.remove('hidden');tab('d');startInbox();
+}
+function genderSetup(){
+  $('nav').classList.add('hidden');
+  $('main').innerHTML=`<div class="hero"><h2>One more thing</h2><p>Tell us who you are and who you would like to meet.</p></div>
+  <label for="gd">I am</label><select id="gd"><option value="">Choose…</option>${opts(GEN)}</select>
+  <label for="lf">Looking for</label><select id="lf"><option value="">Choose…</option>${opts(LOOK)}</select>
+  <p class="err" id="err"></p><button class="btn" id="go">Continue</button>`;
+  $('go').onclick=async()=>{if(!$('gd').value||!$('lf').value)return $('err').textContent='Choose both options.';
+    const {error}=await db.from('profiles').update({gender:$('gd').value,looking_for:$('lf').value}).eq('id',uid);
+    if(error)return $('err').textContent=error.message;enter()};
+}
+function markRead(mid){const ra=ls('cl_ra',{});ra[mid]=Date.now();sv('cl_ra',ra);const sm=ls('cl_sm',[]);if(!sm.includes(mid)){sm.push(mid);sv('cl_sm',sm)}poll()}
+async function pendingLikes(){
+  const [rc,mine]=await Promise.all([db.from('likes').select('from_id').eq('to_id',uid),db.from('likes').select('to_id').eq('from_id',uid)]);
+  const have=(mine.data||[]).map(x=>x.to_id);
+  const ids=(rc.data||[]).map(x=>x.from_id).filter(i=>!have.includes(i)&&!passed.includes(i));
+  if(!ids.length)return [];
+  const {data}=await db.from('profiles').select('*').in('id',ids);
+  return (data||[]).filter(compat);
+}
+async function poll(){
+  if(!uid||!me||busy)return;busy=true;
+  try{
+    const [ms,mg,pl]=await Promise.all([db.from('matches').select('id'),db.from('messages').select('match_id,created_at').neq('sender_id',uid).order('created_at',{ascending:false}).limit(300),pendingLikes()]);
+    const ids=(ms.data||[]).map(m=>m.id),ra=ls('cl_ra',{}),sm=ls('cl_sm',[]);
+    if(known&&ids.some(i=>!known.has(i)))toast('New match! Open Matches to say hi.');
+    known=new Set(ids);
+    UN=new Set((mg.data||[]).filter(x=>ids.includes(x.match_id)&&Date.parse(x.created_at)>(ra[x.match_id]||0)).map(x=>x.match_id));
+    NEWM=new Set(ids.filter(i=>!sm.includes(i)));
+    const sl=ls('cl_sl',[]),nl=pl.filter(p=>!sl.includes(p.id)).length;
+    if(lastNL!==undefined&&nl>lastNL)toast('Someone new liked you!');
+    lastNL=nl;
+    $('bm').textContent=new Set([...UN,...NEWM]).size||'';$('bl2').textContent=nl||'';
+  }catch(e){}
+  busy=false;
+}
+function startInbox(){
+  poll();
+  if(inbox)return;
+  inbox=db.channel('inbox').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},x=>{const m=x.new;if(m.sender_id!==uid&&openM!==m.match_id){toast('New message');poll()}}).subscribe();
+  timer=setInterval(poll,10000);
+}
+async function likeUser(p){
+  const {error}=await db.from('likes').insert({from_id:uid,to_id:p.id});
+  if(error){toast('Could not like. Try again.');return false}
+  const a=uid<p.id?uid:p.id,b=uid<p.id?p.id:uid;
+  const {data}=await db.from('matches').select('id').eq('user_a',a).eq('user_b',b).maybeSingle();
+  if(data&&known)known.add(data.id);
+  toast(data?'It’s a match with '+p.name+'! Open Matches to chat.':'Liked. Maybe they will like you back.');
+  return true;
+}
+async function likesView(){
+  $('main').innerHTML='<p class="empty">Loading…</p>';
+  const ps=await pendingLikes();
+  sv('cl_sl',ps.map(p=>p.id));poll();
+  if(!ps.length){$('main').innerHTML='<div class="empty"><h2>No likes yet.</h2><p>When someone likes you, they show up here. Like them back to start chatting.</p></div>';return}
+  $('main').innerHTML='<h2 style="margin-bottom:12px">People who liked you</h2>'+ps.map(p=>`<div class="card" style="margin-bottom:16px"><div class="pic" style="height:170px;${faceStyle(p)}">${faceText(p)}</div>
+  <div class="body"><h2>${esc(p.name)}</h2><div class="tags"><span>${esc(p.year)}</span><span>${esc(p.campus)}</span><span>${esc(p.major)}</span></div>
+  ${p.bio?`<div class="prompt"><small>About me</small>${esc(p.bio)}</div>`:''}
+  <div class="acts"><button data-pass="${p.id}">Pass</button><button class="like" data-like="${p.id}">Like back</button></div></div></div>`).join('');
+  document.querySelectorAll('[data-pass]').forEach(b=>b.onclick=()=>{passed.push(b.dataset.pass);savePassed();likesView()});
+  document.querySelectorAll('[data-like]').forEach(b=>b.onclick=async()=>{if(await likeUser(ps.find(x=>x.id===b.dataset.like)))likesView()});
 }
 function tab(t){
   if(chan){db.removeChannel(chan);chan=null}openM=null;
-  ['d','m','p'].forEach(k=>$('t-'+k).className=t===k?'on':'');
-  t==='d'?discover():t==='m'?list():profile();
+  ['d','l','m','p'].forEach(k=>$('t-'+k).className=t===k?'on':'');
+  t==='d'?discover():t==='l'?likesView():t==='m'?list():profile();
 }
 async function doBlock(p){await db.from('blocks').insert({blocker_id:uid,blocked_id:p.id})}
 function report(p,after){ask('Report '+p.name,['Fake profile','Inappropriate content','Harassment','Something else'],async c=>{
@@ -185,9 +259,9 @@ async function discover(){
   $('main').innerHTML='<p class="empty">Loading…</p>';
   let q=db.from('profiles').select('*').neq('id',uid).limit(60);
   if(filt!=='All campuses')q=q.eq('campus',filt);
-  const [pr,lk]=await Promise.all([q,db.from('likes').select('to_id')]);
-  const liked=(lk.data||[]).map(x=>x.to_id);
-  const p=(pr.data||[]).find(x=>!liked.includes(x.id)&&!passed.includes(x.id));
+  const [pr,lk,rc]=await Promise.all([q,db.from('likes').select('to_id').eq('from_id',uid),db.from('likes').select('from_id').eq('to_id',uid)]);
+  const liked=(lk.data||[]).map(x=>x.to_id),recv=(rc.data||[]).map(x=>x.from_id);
+  const p=(pr.data||[]).find(x=>compat(x)&&!liked.includes(x.id)&&!recv.includes(x.id)&&!passed.includes(x.id));
   const bar=`<select id="fl" aria-label="Campus filter" style="margin-bottom:14px">${opts(['All campuses',...CPS],filt)}</select>`;
   const all=filt==='All campuses';
   $('main').innerHTML=bar+(p?`<div class="card"><div class="pic" style="${faceStyle(p)}">${faceText(p)}</div>
@@ -199,31 +273,27 @@ async function discover(){
   $('fl').onchange=e=>{filt=e.target.value;discover()};
   if(!p)return;
   $('pass').onclick=()=>{passed.push(p.id);savePassed();discover()};
-  $('lk').onclick=async()=>{
-    const {error}=await db.from('likes').insert({from_id:uid,to_id:p.id});
-    if(error)return toast('Could not like. Try again.');
-    const a=uid<p.id?uid:p.id,b=uid<p.id?p.id:uid;
-    const {data}=await db.from('matches').select('id').eq('user_a',a).eq('user_b',b).maybeSingle();
-    toast(data?'It’s a match with '+p.name+'!':'Liked. Maybe they will like you back.');discover()};
+  $('lk').onclick=async()=>{if(await likeUser(p))discover()};
   $('rp').onclick=()=>report(p,discover);$('bl').onclick=()=>blockIt(p,discover);
 }
 async function list(){
   $('main').innerHTML='<p class="empty">Loading…</p>';
+  await poll();
   const {data:ms}=await db.from('matches').select('id,user_a,user_b').order('created_at',{ascending:false});
   const ids=(ms||[]).map(m=>m.user_a===uid?m.user_b:m.user_a);
   const {data:ps}=ids.length?await db.from('profiles').select('*').in('id',ids):{data:[]};
   const rows=(ms||[]).map(m=>({m,p:(ps||[]).find(x=>x.id===(m.user_a===uid?m.user_b:m.user_a))})).filter(r=>r.p);
   if(!rows.length){$('main').innerHTML='<div class="empty"><h2>No matches yet.</h2><p>Like a few profiles in Discover to get started.</p></div>';return}
-  $('main').innerHTML='<h2 style="margin-bottom:10px">Your matches</h2>'+rows.map((r,k)=>`<button class="row" data-k="${k}"><span class="av" style="${faceStyle(r.p)}">${faceText(r.p)}</span><span><b>${esc(r.p.name)}</b><br><small style="color:var(--mute)">${esc(r.p.major)} · ${esc(r.p.campus)}</small></span></button>`).join('');
+  $('main').innerHTML='<h2 style="margin-bottom:10px">Your matches</h2>'+rows.map((r,k)=>`<button class="row" data-k="${k}"><span class="av" style="${faceStyle(r.p)}">${faceText(r.p)}</span><span><b>${esc(r.p.name)}</b> ${NEWM.has(r.m.id)?'<span class="bd">New match</span>':UN.has(r.m.id)?'<span class="bd">New message</span>':''}<br><small style="color:var(--mute)">${esc(r.p.major)} · ${esc(r.p.campus)}</small></span></button>`).join('');
   document.querySelectorAll('.row').forEach(b=>b.onclick=()=>chat(rows[b.dataset.k].m.id,rows[b.dataset.k].p));
 }
 async function chat(mid,p){
-  openM=mid;const ids=new Set();
+  openM=mid;const ids=new Set();markRead(mid);
   $('main').innerHTML=`<button class="back" id="bk">Back to matches</button><div style="display:flex;justify-content:space-between;align-items:center"><h2>${esc(p.name)}</h2><span class="rb" style="margin:0"><button class="link" id="rp">Report</button><button class="link" id="bl">Block</button></span></div><div class="msgs" id="log"></div>
   <div class="send"><input id="tx" placeholder="Write a message" aria-label="Message"><button class="btn" id="sd">Send</button></div>`;
   $('bk').onclick=()=>tab('m');$('rp').onclick=()=>report(p,()=>tab('m'));$('bl').onclick=()=>blockIt(p,()=>tab('m'));
   const log=$('log');
-  const add=m=>{if(ids.has(m.id))return;ids.add(m.id);const em=$('em');if(em)em.remove();
+  const add=m=>{if(ids.has(m.id))return;ids.add(m.id);if(m.sender_id!==uid&&openM===mid)markRead(mid);const em=$('em');if(em)em.remove();
     log.insertAdjacentHTML('beforeend',`<div class="m ${m.sender_id===uid?'me':''}">${esc(m.body)}</div>`);log.lastElementChild.scrollIntoView()};
   const {data}=await db.from('messages').select('*').eq('match_id',mid).order('created_at');
   if(openM!==mid)return;
@@ -243,6 +313,8 @@ function profile(){
   <label for="pn">First name</label><input id="pn" maxlength="40" value="${esc(me.name)}">
   <label for="py">Year</label><select id="py">${opts(YRS,me.year)}</select>
   <label for="pc">Campus</label><select id="pc">${opts(CPS,me.campus)}</select>
+  <label for="pg">I am</label><select id="pg">${opts(GEN,me.gender)}</select>
+  <label for="pl">Looking for</label><select id="pl">${opts(LOOK,me.looking_for)}</select>
   <label for="pm">Major</label><input id="pm" maxlength="60" value="${esc(me.major)}">
   <label for="pb">About me</label><input id="pb" maxlength="90" placeholder="One line about you" value="${esc(me.bio)}">
   <p class="err" id="pe"></p><button class="btn" id="sv">Save changes</button>
@@ -254,14 +326,14 @@ function profile(){
   $('fi').onchange=e=>{$('pe').textContent='';readPhoto(e.target.files[0],async b=>{try{await setPhoto(await upPhoto(b))}catch(x){$('pe').textContent=x.message}},t=>$('pe').textContent=t);e.target.value=''};
   $('sv').onclick=async()=>{const n=$('pn').value.trim(),m=$('pm').value.trim();
     if(!n||!m)return $('pe').textContent='Name and major cannot be empty.';
-    const row={name:n,major:m,year:$('py').value,campus:$('pc').value,bio:$('pb').value.trim()};
+    const row={name:n,major:m,year:$('py').value,campus:$('pc').value,gender:$('pg').value,looking_for:$('pl').value,bio:$('pb').value.trim()};
     const {error}=await db.from('profiles').update(row).eq('id',uid);
     if(error)return $('pe').textContent=error.message;
     Object.assign(me,row);$('who').textContent=n+' · '+me.campus;toast('Profile saved')};
-  $('lo').onclick=async()=>{await db.auth.signOut();me=null;uid=null;$('who').textContent='';home()};
+  $('lo').onclick=async()=>{if(inbox){db.removeChannel(inbox);inbox=null}clearInterval(timer);known=null;lastNL=undefined;$('bm').textContent='';$('bl2').textContent='';await db.auth.signOut();me=null;uid=null;$('who').textContent='';home()};
 }
-$('t-d').onclick=()=>tab('d');$('t-m').onclick=()=>tab('m');$('t-p').onclick=()=>tab('p');
+$('t-d').onclick=()=>tab('d');$('t-l').onclick=()=>tab('l');$('t-m').onclick=()=>tab('m');$('t-p').onclick=()=>tab('p');
 enter();
 </script>
 </body>
-  </html>
+</html>
